@@ -94,6 +94,7 @@ export function NewsArticles(props: NewsArticlesProps) {
                   src={active.image_url}
                   alt={active.title}
                   className="w-full h-80 lg:h-80 sm:rounded-tr-lg sm:rounded-tl-lg object-cover object-top"
+                  onError={(e) => e.target.src = 'https://placehold.co/1080x720?text=Image%20not%20provided'}
                 />
                 <motion.button
                   key={`button-${active.title}-${id}`}
@@ -244,6 +245,7 @@ export function NewsArticles(props: NewsArticlesProps) {
                   height={100}
                   src={card.image_url}
                   alt={card.title}
+                  onError={(e) => e.target.src = 'https://placehold.co/1080x720?text=Image%20not%20provided'}
                   className="h-60 w-full  rounded-lg object-cover object-top"
                 />
               </motion.div>

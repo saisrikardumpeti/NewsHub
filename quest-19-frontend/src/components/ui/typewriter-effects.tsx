@@ -236,7 +236,6 @@ export const TypewriterEffectSmooth = ({
     for (let lineIndex = 0; lineIndex <= maxLineIndex; lineIndex++) {
       const lineChars = lineGroups[lineIndex] || []
       const isCursorOnThisLine = cursorPosition.lineIndex === lineIndex
-      console.log(lineIndex)
       lines.push(
         <div key={lineIndex} className={`relative min-h-[1em] ${lineIndex === 1 ? 'hidden': ''}`}>
           <span className="inline-block">
