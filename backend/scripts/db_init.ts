@@ -159,7 +159,7 @@ try {
     CREATE AGENT search_agent
       USING
         model = 'gemini-2.0-flash',
-        google_api_key = 'AIzaSyAXd-QDavkmSI5sdlcGkG8tSRyXCq_0tgE',
+        google_api_key = ${process.env.GEMINI_API},
         include_knowledge_bases= ['mindsdb.articles_kb'],
         include_tables=['postgres_conn.articles'],
         prompt_template='
