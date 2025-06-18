@@ -75,6 +75,7 @@ app.get("/news", async (c) => {
     data = await MindsDB.SQL.runQuery(`
       SELECT * FROM postgres_conn.articles
       ${stmt.length > 0 ? "WHERE " + stmt.join(" AND ") : ""}
+      ORDER BY RANDOM()
       LIMIT ${NEWS_LIMIT}
       OFFSET ${parseInt(page) * NEWS_LIMIT}
     `);

@@ -3,7 +3,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "db:init": "tsx scripts/db_init.ts",
+    "db:init": "tsx scripts/db_init.ts && tsx scripts/add_articles.ts",
     "build": "tsc",
     "start": "node dist/index.js"
   },

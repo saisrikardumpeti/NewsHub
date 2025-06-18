@@ -3,7 +3,7 @@ import postgres from "postgres";
 import { exit } from "process";
 import { PREDEFINED_CATEGORIES } from "../src/lib/constant.js";
 import { getNews, sanitizeArticles } from "./get_news.js";
-
+import mindsDB from "mindsdb-js-sdk";
 
 config();
 
@@ -15,13 +15,25 @@ const sql = postgres({
   password: "password"
 });
 
+const offsetCount = await sql`SELECT COUNT(*) as offset FROM articles;`
+
+const MindsDB = mindsDB.default;
+
+await MindsDB.connect({
+  host: "http://localhost:47334",
+  user: "",
+  password: "",
+});
+
+let limitCount = 0;
 
 for (const category of PREDEFINED_CATEGORIES) {
-  const url = `https://newsapi.org/v2/top-headlines?category=${category.name}&pageSize=20&apiKey=${process.env.NEWS_API_KEY}`
+  const url = `https://newsapi.org/v2/top-headlines?category=${category.name}&pageSize=10&apiKey=${process.env.NEWS_API_KEY}`
 
   const articles = await getNews(url)
 
   const sanitizedArticles = await sanitizeArticles(articles)
+
   for (const newArticle of sanitizedArticles) {
     await sql`
       INSERT INTO articles(
@@ -47,10 +59,17 @@ for (const category of PREDEFINED_CATEGORIES) {
         ${newArticle.url},
         ${newArticle.urlToImage || "https://placehold.co/1080x720?text=Image%20not%20provided"},
         ${newArticle.publishedAt || Date.now().toLocaleString()}
-      );
+      )
+      ON CONFLICT (title) DO NOTHING;
     `;
   }
-  console.log("Articles fetched for ", category)
+
+  limitCount += sanitizedArticles.length
 }
+
+await MindsDB.SQL.runQuery(`
+  INSERT INTO articles_kb
+    SELECT id, content FROM postgres_conn.articles LIMIT ${limitCount} OFFSET ${offsetCount}
+`)
 
 exit(0)

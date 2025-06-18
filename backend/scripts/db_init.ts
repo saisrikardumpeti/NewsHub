@@ -21,7 +21,7 @@ export interface NewsArticleType {
 config();
 
 const params = {
-  "host": "192.168.1.7",
+  "host": process.env.MINDSDB_POSTGRES_HOST!,
   "port": 5432,
   "database": "news_platform",
   "user": "postgres",
@@ -71,7 +71,7 @@ try {
       source_id VARCHAR(255) NOT NULL,
       source_name VARCHAR(255) NOT NULL,
       author VARCHAR(255),
-      title TEXT NOT NULL,
+      title TEXT NOT NULL UNIQUE,
       description TEXT,
       content TEXT,
       category VARCHAR(100),
@@ -155,6 +155,19 @@ try {
           content: {{content}}
         ';
   `)
+  await MindsDB.SQL.runQuery(`
+    CREATE AGENT search_agent
+      USING
+        model = 'gemini-2.0-flash',
+        google_api_key = 'AIzaSyAXd-QDavkmSI5sdlcGkG8tSRyXCq_0tgE',
+        include_knowledge_bases= ['mindsdb.articles_kb'],
+        include_tables=['postgres_conn.articles'],
+        prompt_template='
+            mindsdb.articles_kb stores articles 
+            postgres_conn.articles stores articles
+        ';
+  `)
+
   console.log("Created Into database")
 
   exit(0)
