@@ -6,7 +6,6 @@ export interface UserPreferences {
 export const cookieUtils = {
   set: (name: string, value: any, days = 30) => {
     if (typeof document === "undefined") return
-
     const expires = new Date()
     expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000)
     document.cookie = `${name}=${JSON.stringify(value)};expires=${expires.toUTCString()};path=/`

@@ -1,10 +1,27 @@
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { BaseLayout } from "@/layouts/BaseLayout";
 import { PlaceholdersAndVanishInput } from "@/components/ui/placeholders-and-vanish-input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useArticles, useUserPreferences } from "@/hooks/use-news";
-import { useState } from "react";
 import { NewsArticles } from "@/components/news-article";
 import { Search, Sparkles } from "lucide-react";
+import { useSearchSummarize } from '@/hooks/use-search-summarize'
+import { TypewriterEffectSmooth } from '@/components/ui/typewriter-effects';
+import { TextLoadingSkeleton } from '@/components/ui/text-loading';
+
+type ProductSearch = {
+  q: string
+}
+
+export const Route = createFileRoute("/")({
+  component: Home,
+  validateSearch: (search: Record<string, unknown>): ProductSearch => {
+    return {
+      q: search.q as string
+    }
+  },
+})
+
 
 export function Home() {
   const placeholders = [
@@ -14,38 +31,59 @@ export function Home() {
   ];
 
   const { data: userPreferences } = useUserPreferences()
-  const [searchQuery, setSearchQuery] = useState("")
-
-
-  const onSubmit = (e: React.FormEvent<HTMLFormElement>, query: string) => {
-    e.preventDefault();
-    setSearchQuery(query)
-  };
+  const navigate = useNavigate({ from: Route.fullPath })
+  const { q } = Route.useSearch()
 
   const {
     data: articles,
     isLoading,
-    isError,
-    error,
     refetch,
     isFetching,
   } = useArticles(
     userPreferences?.sources.length ? userPreferences.sources : undefined,
     userPreferences?.categories.length ? userPreferences.categories : undefined,
-    searchQuery || undefined,
+    q || undefined,
   )
+
+  const {
+    data: searchSummary,
+    status,
+    isFetching: searchSummaryFetching,
+    refetch: searchRefetch
+  } = useSearchSummarize({ q: q })
+
+
+  const onSubmit = (e: React.FormEvent<HTMLFormElement>, query: string) => {
+    e.preventDefault();
+    navigate({
+      search: (prev) => ({ ...prev, q: query })
+    })
+    searchRefetch()
+  };
 
   return (
     <BaseLayout className="space-y-4" isFetching={isFetching} refetch={refetch}>
       <PlaceholdersAndVanishInput
         placeholders={placeholders}
         onSubmit={onSubmit}
+        q={q}
       />
+      <div className='max-w-7xl mx-auto w-full rounded-md'>
+        {
+          searchSummaryFetching && status === 'pending' ?
+            <AISummaryLoading q={q} />
+            : searchSummary &&
+            <div className="bg-neutral-800 rounded-md p-4">
+              <h1 className="text-lg font-bold inline-flex items-center gap-x-2"><Sparkles /> Ai Summary for: {q}</h1>
+              <TypewriterEffectSmooth text={searchSummary?.summary as string} showCursor={false} typeSpeed={5} />
+            </div>
+        }
+      </div>
       {
-        searchQuery !== "" ? 
-      <div className="max-w-7xl mx-auto w-full">
-        <h1 className="text-lg font-bold inline-flex items-center gap-x-2"><Search /> Showings articles for : {searchQuery}</h1>
-      </div> : null
+        q !== "" ?
+          <div className="max-w-7xl mx-auto w-full">
+            <h1 className="text-lg font-bold inline-flex items-center gap-x-2"><Search /> Some Relavent articles for : {q}</h1>
+          </div> : null
       }
       {
         isLoading ?
@@ -89,3 +127,17 @@ function LoadingArticles() {
   )
 }
 
+function AISummaryLoading({
+  q
+}: {
+  q: string
+}) {
+  return (
+    <div className="bg-neutral-800 rounded-md p-4">
+      <h1 className="text-lg font-bold inline-flex items-center gap-x-2"><Sparkles /> Ai Summary for {q}</h1>
+      <Skeleton className="h-42 p-4">
+        <TextLoadingSkeleton lines={5} skeletonClassName="bg-purple-200" />
+      </Skeleton>
+    </div>
+  )
+}

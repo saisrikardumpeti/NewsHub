@@ -10,6 +10,8 @@ import { SUPPORTED_LANGUAGES, type LanguageName } from "@/lib/languages";
 import { useTranslate } from "@/hooks/use-translate";
 import { Skeleton } from "./ui/skeleton";
 import { TextLoadingSkeleton } from "./ui/text-loading";
+import { TypewriterEffectSmooth } from "./ui/typewriter-effects";
+import { Badge } from "./ui/badge";
 
 interface NewsArticlesProps {
   news: NewsArticle[];
@@ -73,7 +75,7 @@ export function NewsArticles(props: NewsArticlesProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/20 h-full w-full z-10"
+            className="fixed inset-0 bg-neutral-800/75 h-full w-full z-10"
           />
         )}
       </AnimatePresence>
@@ -89,7 +91,7 @@ export function NewsArticles(props: NewsArticlesProps) {
                 <img
                   width={200}
                   height={200}
-                  src={active.urltoimage}
+                  src={active.image_url}
                   alt={active.title}
                   className="w-full h-80 lg:h-80 sm:rounded-tr-lg sm:rounded-tl-lg object-cover object-top"
                 />
@@ -118,7 +120,7 @@ export function NewsArticles(props: NewsArticlesProps) {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  href={active.url}
+                  href={active.article_url}
                   target="_blank"
                   className="size-11 text-sm rounded-full font-bold bg-green-500 text-white absolute bottom-2 right-2 inline-flex items-center justify-center"
                 >
@@ -163,7 +165,7 @@ export function NewsArticles(props: NewsArticlesProps) {
                 </motion.div>
               </motion.div>
 
-              <div>
+              <motion.div>
                 <div className="flex justify-between items-start p-4 overflow-y-scroll">
                   <div className="w-full">
                     <motion.h3
@@ -182,15 +184,23 @@ export function NewsArticles(props: NewsArticlesProps) {
                     </motion.h3>
                   </div>
                 </div>
-
-                <div>
-                  <motion.div layoutId={`ai-summary-${id}`} className="p-4">
-                    {
-                      sStatus === 'pending' && summaryFetching ?
-                        <AISummaryLoading /> : articleSummary?.summary
-                    }
-                  </motion.div>
-                </div>
+                {
+                  summaryFetching && sStatus === 'pending' ?
+                    <div>
+                      <motion.div layoutId={`ai-summary-${id}`} className="p-4 space-y-2">
+                        <AISummaryLoading />
+                      </motion.div>
+                    </div>
+                    : articleSummary &&
+                    <div>
+                      <motion.div layoutId={`ai-summary-${id}`} className="p-4 space-y-2">
+                        <div className="bg-neutral-800 rounded-md p-4">
+                          <h1 className="text-lg font-bold inline-flex items-center gap-x-2"><Sparkles /> Ai Summary</h1>
+                          <TypewriterEffectSmooth text={articleSummary?.summary as string} showCursor={false} typeSpeed={5} />
+                        </div>
+                      </motion.div>
+                    </div>
+                }
 
                 <div className="relative px-4">
                   <motion.div
@@ -211,30 +221,33 @@ export function NewsArticles(props: NewsArticlesProps) {
                     }
                   </motion.div>
                 </div>
-              </div>
+              </motion.div>
             </motion.div>
           </div>
         ) : null}
       </AnimatePresence>
       <ul className="max-w-7xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-start gap-4">
-        {news.map((card) => (
+        {news.map((card, idx) => (
           <motion.div
             layoutId={`card-${card.title}-${id}`}
-            key={card.title}
+            key={`${card.title}-${id}-${idx}`}
             onClick={() => setActive(card)}
             className="p-4 flex flex-col hover:bg-neutral-50 dark:hover:bg-neutral-800 rounded-xl cursor-pointer border-2"
           >
-            <div className="flex gap-4 flex-col  w-full">
-              <motion.div layoutId={`image-${card.title}-${id}`}>
+            <div className="flex gap-4 flex-col w-full">
+              <motion.div layoutId={`image-${card.title}-${id}`} className="relative">
+                <Badge className="absolute right-2 bottom-2" >
+                  {card.source_name}
+                </Badge>
                 <img
                   width={100}
                   height={100}
-                  src={card.urltoimage}
+                  src={card.image_url}
                   alt={card.title}
                   className="h-60 w-full  rounded-lg object-cover object-top"
                 />
               </motion.div>
-              <div className="flex justify-center items-center flex-col">
+              <div className="flex justify-center items-center flex-col space-y-2">
                 <motion.h3
                   layoutId={`title-${card.title}-${id}`}
                   className="font-medium text-neutral-800 dark:text-neutral-200 text-center md:text-left text-base line-clamp-1"
@@ -243,9 +256,12 @@ export function NewsArticles(props: NewsArticlesProps) {
                 </motion.h3>
                 <motion.p
                   layoutId={`description-${card.description}-${id}`}
-                  className="text-neutral-600 dark:text-neutral-400 text-center md:text-left text-base line-clamp-2"
+                  className="text-neutral-600 dark:text-neutral-400 text-center md:text-left text-sm line-clamp-2"
                 >
                   {card.description}
+                </motion.p>
+                <motion.p className="w-full text-left text-xs">
+                  Published On: {new Date(card.published_at || card.created_at).toDateString()}
                 </motion.p>
               </div>
             </div>
@@ -291,7 +307,7 @@ export const CloseIcon = () => {
 
 function AISummaryLoading() {
   return (
-    <div className="space-y-2">
+    <div className="bg-neutral-800 rounded-md p-4">
       <h1 className="text-lg font-bold inline-flex items-center gap-x-2"><Sparkles /> Ai Summary</h1>
       <Skeleton className="h-42 p-4">
         <TextLoadingSkeleton lines={5} skeletonClassName="bg-purple-200" />

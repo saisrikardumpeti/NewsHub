@@ -7,8 +7,10 @@ import { cn } from "@/lib/utils";
 export function PlaceholdersAndVanishInput({
   placeholders,
   onSubmit,
+  q
 }: {
   placeholders: string[];
+  q: string;
   onSubmit: (e: React.FormEvent<HTMLFormElement>, query: string) => void;
 }) {
   const [currentPlaceholder, setCurrentPlaceholder] = useState(0);
@@ -43,7 +45,7 @@ export function PlaceholdersAndVanishInput({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const newDataRef = useRef<any[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState(q || "");
   const [animating, setAnimating] = useState(false);
 
   const draw = useCallback(() => {

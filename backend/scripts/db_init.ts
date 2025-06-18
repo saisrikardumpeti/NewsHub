@@ -1,0 +1,164 @@
+import { config } from "dotenv";
+import mindsDB from "mindsdb-js-sdk";
+import postgres from "postgres";
+import { exit } from "process";
+
+export interface NewsArticleType {
+  id: number
+  source_id: string
+  source_name: string
+  author: string
+  title: string
+  description: string
+  content: string
+  category: string
+  url: string
+  urltoimage: string
+  publishedat: string
+  date_added: string
+}
+
+config();
+
+const params = {
+  "host": "192.168.1.7",
+  "port": 5432,
+  "database": "news_platform",
+  "user": "postgres",
+  "password": "password",
+};
+
+const MindsDB = mindsDB.default;
+
+const sql = postgres(process.env.DB_URL!);
+
+try {
+
+  await MindsDB.connect({
+    host: "http://localhost:47334",
+    user: "",
+    password: "",
+  });
+
+  const res = await MindsDB.SQL.runQuery(`
+    CREATE KNOWLEDGE_BASE IF NOT EXISTS articles_kb
+      USING
+        embedding_model = {
+          "provider": "openai",
+          "model_name": "text-embedding-3-small",
+          "api_key": "${process.env.OPENAI_API!}"
+        },
+        reranking_model = {
+          "provider": "openai",
+          "model_name": "gpt-4.1-nano",
+          "api_key": "${process.env.OPENAI_API!}"
+        },
+        metadata_columns = [
+          'source_id',
+          'source_name', 
+          'title',
+          'description',
+          'category',
+          'published_at'
+        ],
+        content_columns = ['id', 'content'],
+        id_column = 'id';
+  `);
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS articles (
+      id SERIAL PRIMARY KEY,
+      source_id VARCHAR(255) NOT NULL,
+      source_name VARCHAR(255) NOT NULL,
+      author VARCHAR(255),
+      title TEXT NOT NULL,
+      description TEXT,
+      content TEXT,
+      category VARCHAR(100),
+      article_url TEXT,
+      image_url TEXT,
+      published_at TIMESTAMP WITH TIME ZONE,
+      added_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+`
+  await sql`
+    CREATE TABLE IF NOT EXISTS ai_summaries (
+      id SERIAL PRIMARY KEY,
+      article_id INTEGER NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
+      summary_text TEXT NOT NULL,
+      confidence_score DECIMAL(3,2),
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+`
+  await sql`
+    CREATE TABLE IF NOT EXISTS questions_answers (
+      id SERIAL PRIMARY KEY,
+      article_id INTEGER NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
+      question TEXT NOT NULL,
+      answer TEXT NOT NULL,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+  `
+
+  const createDbResult = await MindsDB.Databases.getDatabase(
+    "postgres_conn"
+  );
+
+  if (!createDbResult) {
+    await MindsDB.Databases.createDatabase(
+      "postgres_conn",
+      "postgres",
+      params,
+    );
+  }
+
+  await MindsDB.SQL.runQuery(`
+    CREATE ML_ENGINE google_gemini_engine
+      FROM google_gemini
+      USING
+        api_key = '${process.env.GEMINI_API}';
+  `)
+
+  await MindsDB.SQL.runQuery(`
+    CREATE MODEL translation_model
+    PREDICT response
+    USING
+      engine = 'google_gemini_engine',
+      model_name = 'gemini-2.0-flash-lite',
+      prompt_template = 'JUST Translate this text {{content}} to {{lang}} DO NOT GIVE SUGGESTIONS!';
+  `)
+
+  await MindsDB.SQL.runQuery(`
+    CREATE MODEL summarization_model
+    PREDICT response
+    USING
+      engine = 'google_gemini_engine',
+      model_name = 'gemini-2.0-flash-lite',
+      prompt_template = 'Summarize this {{content}} AND TRANSLATE the summarized text to {{lang}} DO NOT GIVE SUGGESTIONS! and ONLY GIVE ME THE {{lang}} TRANSLATED TEXT PLEASE!';
+  `)
+
+  await MindsDB.SQL.runQuery(`
+    CREATE MODEL search_content_summarization_model
+      PREDICT response
+      USING
+        engine = 'google_gemini_engine',
+        model_name = 'gemini-2.0-flash-lite',
+        prompt_template = '
+          Provide me the summary of the content do not use any makrdown formatting for that please.
+          Do not mention anything about that you are summarizing the content.
+          Just give me the summarized content.
+
+          content: {{content}}
+        ';
+  `)
+  console.log("Created Into database")
+
+  exit(0)
+} catch (error) {
+  console.log(error);
+  exit(1)
+}

@@ -19,6 +19,7 @@ export function useSummarize({ id, translate } : useSummarizeType) {
       return res.json()
     },
     staleTime: 1 * 60 * 1000,
-    enabled: translate !== undefined
+    refetchOnWindowFocus: false,
+    enabled: false
   })
 }

@@ -8,9 +8,10 @@ export interface NewsArticle {
   content: string
   source_name: string
   category: string
-  publishedat: string
-  urltoimage: string
-  url: string
+  published_at: string
+  image_url: string
+  article_url: string
+  created_at: string
 }
 
 export function useArticles(sources?: string[], categories?: string[], searchQuery?: string) {
