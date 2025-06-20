@@ -1,8 +1,26 @@
 # NewsHub - AI-Powered News Aggregator 📰
 
+<video controls autoplay loop muted>
+  <source src="https://raw.githubusercontent.com/saisrikardumpeti/quest-19/refs/heads/main/.github/schematic_ai.mp4" type="video/mp4">
+</video>
+
 A full-stack news aggregation platform that delivers personalized news
 experiences through AI-powered summarization, translation, and intelligent
 content curation.
+
+## Demo Videos
+
+<div style="display: flex; flex-wrap: wrap;">
+  <video controls autoplay loop muted preload height="250px">
+    <source src=".github/cross_content_checker.mp4" type="video/mp4">
+  </video>
+  <video controls autoplay loop muted preload height="250px">
+    <source src=".github/summary_model.mp4" type="video/mp4">
+  </video>
+  <video controls autoplay loop muted preload height="250px">
+    <source src=".github/translation_model.mp4" type="video/mp4">
+  </video>
+</div>
 
 ## ✨ Features
 
@@ -112,7 +130,7 @@ chmod +x setup-cron.sh
 pnpm install
 pnpm db:init        # Initialize database schema
 pnpm dev            # Start development server
-./setup-cron.sh     # run the corn job for automatic fetching of new data
+./setup-cron.sh     # run the cron job for automatic fetching of new data
 pnpm add_articles   # Seed database with some articles this might take a while
 ```
 
