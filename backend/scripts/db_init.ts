@@ -149,7 +149,7 @@ try {
       include_knowledge_bases = ['mindsdb.articles_kb'],
       include_tables      = ['postgres_conn.articles'],
       tools               = ['sql_query'],
-      prompt_template     = '${prompt}'
+      prompt_template     = '${prompt}';
   `);
 
   await MindsDB.SQL.runQuery(`

@@ -14,7 +14,7 @@ export function useCrossContent({ id }: useSummarizeType) {
       });
       return res.text();
     },
-    staleTime: 1 * 60 * 1000,
+    staleTime: 60 * 60 * 60 * 1000,
     enabled: id !== undefined,
   });
 }

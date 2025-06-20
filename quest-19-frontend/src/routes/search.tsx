@@ -7,9 +7,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AnimatePresence } from "motion/react";
 import { useEffect, useId, useRef, useState } from "react";
 import { motion } from "motion/react";
-import { TrendingUp } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Sparkles } from "lucide-react";
 import { BaseLayout } from "@/layouts/BaseLayout";
+import { useSearchSummarize } from "@/hooks/use-search-summarize";
+import { TypewriterEffectSmooth } from "@/components/ui/typewriter-effects";
+import { Skeleton } from "@/components/ui/skeleton";
+import { TextLoadingSkeleton } from "@/components/ui/text-loading";
 
 type ProductSearch = {
   q?: string;
@@ -27,6 +30,7 @@ export const Route = createFileRoute("/search")({
 function RouteComponent() {
   const { q } = Route.useSearch();
   const { data: articles, status } = useSearchNews({ q });
+  const { data: searchSummary, status: searchStatus, isFetching } = useSearchSummarize({ q })
   const [active, setActive] = useState<NewsArticle | null>(
     null,
   );
@@ -54,7 +58,7 @@ function RouteComponent() {
     setActive(news);
   }
 
-  if (status === "pending") {
+  if (status === "pending" && searchStatus === 'pending') {
     return (
       <BaseLayout className="space-y-4" q={q}>
         <section className="mb-12">
@@ -67,16 +71,32 @@ function RouteComponent() {
     );
   }
 
-  if (status === "error") {
+  if (status === "error" && searchStatus === 'error') {
     return <>Error..</>;
   }
   return (
     <BaseLayout className="space-y-4" q={q}>
-      <section className="mb-12">
+      <section className="mb-12 space-y-4">
+        {
+          isFetching ? <AISummaryLoading /> :
+            searchSummary ? <div>
+              <div className="space-y-2">
+                <div className="bg-neutral-800 rounded-md p-4">
+                  <h1 className="text-lg font-bold inline-flex items-center gap-x-2">
+                    <Sparkles /> Ai Summary
+                  </h1>
+                  <TypewriterEffectSmooth
+                    text={searchSummary?.summary as string}
+                    showCursor={false}
+                    typeSpeed={10}
+                  />
+                </div>
+              </div>
+            </div> : null
+        }
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-3xl font-bold">Showing articles for : {q}</h2>
         </div>
-
         <>
           <AnimatePresence>
             {active && typeof active === "object" && (
@@ -94,7 +114,7 @@ function RouteComponent() {
             ref={ref}
             id={id}
           />
-          <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {articles?.headlines.map((article) => (
               <ArticleCard
                 handleSetActive={handleSetActive}
@@ -106,5 +126,18 @@ function RouteComponent() {
         </>
       </section>
     </BaseLayout>
+  );
+}
+
+function AISummaryLoading() {
+  return (
+    <div className="bg-neutral-800 rounded-md p-4">
+      <h1 className="text-lg font-bold inline-flex items-center gap-x-2">
+        <Sparkles /> Ai Summary
+      </h1>
+      <Skeleton className="h-42 p-4">
+        <TextLoadingSkeleton lines={5} skeletonClassName="bg-purple-200" />
+      </Skeleton>
+    </div>
   );
 }

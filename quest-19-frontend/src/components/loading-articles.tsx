@@ -2,7 +2,7 @@ import { Skeleton } from "./ui/skeleton";
 
 export function LoadingArticles() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {Array(10).fill(0).map((el, idx) => (
         <div
           key={`loading-${el}-${idx}`}
