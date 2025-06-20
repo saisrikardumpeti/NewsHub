@@ -1,79 +1,76 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { cookieUtils, type UserPreferences } from "@/lib/cookies"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { cookieUtils, type UserPreferences } from "@/lib/cookies";
 
 export interface NewsArticle {
-  id: number
-  title: string
-  description: string
-  content: string
-  source_name: string
-  category: string
-  published_at: string
-  image_url: string
-  article_url: string
-  created_at: string
+  id: number;
+  title: string;
+  description: string;
+  content: string;
+  source_name: string;
+  category: string;
+  published_at: string;
+  image_url: string;
+  article_url: string;
+  created_at: string;
 }
 
-export function useArticles(sources?: string[], categories?: string[], searchQuery?: string) {
-  return useQuery<NewsArticle[]>({
-    queryKey: ["articles", sources, categories, searchQuery],
+interface useArticlesProps {
+  sources?: string[];
+  categories?: string;
+}
+
+interface Response {
+  headlines?: NewsArticle[];
+}
+
+export function useArticles({ sources, categories }: useArticlesProps) {
+  return useQuery<Response>({
+    queryKey: ["news", sources, categories],
     queryFn: async () => {
-      const res = await fetch(`/api/news?s=${sources || ''}&c=${categories || ''}&q=${searchQuery || ''}`)
-      return res.json()
+      if (!sources && !categories) return;
+      const res = await fetch(
+        `/api/news?category=${categories || ""}&sources=${sources || ""}`,
+        {
+          credentials: "include",
+        },
+      );
+      return res.json();
     },
-    enabled: true,
+    enabled: (categories?.length ?? 0) > 0 || (sources?.length ?? 0) > 0,
     staleTime: 2 * 60 * 1000,
-  })
-}
-
-export function useSearchArticles(query: string, enabled = true) {
-  return useQuery({
-    queryKey: ["search", query],
-    queryFn: async () => {
-      const res = await fetch(`/api/search?q=${query}`)
-      return res
-    },
-    enabled: enabled && query.length > 0,
-    staleTime: 1 * 60 * 1000,
-  })
+  });
 }
 
 export function useUserPreferences() {
   return useQuery({
     queryKey: ["preferences"],
     queryFn: (): UserPreferences => {
-      const preferences = cookieUtils.get("userPreferences") as UserPreferences
-      return preferences || { sources: [], categories: [] }
+      const preferences = cookieUtils.get("userPreferences") as UserPreferences;
+      return preferences || { sources: [], categories: [] };
     },
-    staleTime: Number.POSITIVE_INFINITY
-  })
+    staleTime: Number.POSITIVE_INFINITY,
+  });
 }
 
 export function useUpdatePreferences() {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (preferences: UserPreferences): Promise<UserPreferences> => {
-      cookieUtils.set("userPreferences", preferences)
-      return preferences
+    mutationFn: async (
+      preferences: UserPreferences,
+    ): Promise<UserPreferences> => {
+      cookieUtils.set("userPreferences", preferences);
+      return preferences;
     },
     onSuccess: (preferences) => {
-      queryClient.setQueryData(["preferences"], preferences)
+      queryClient.setQueryData(["preferences"], preferences);
 
       queryClient.invalidateQueries({
         queryKey: ["articles"],
-      })
+      });
     },
     onError: (error) => {
-      console.error("Failed to update preferences:", error)
+      console.error("Failed to update preferences:", error);
     },
-  })
+  });
 }
-
-// export function useArticleQA() {
-//   return useMutation({
-//     mutationFn: async ({ article, question }: { article: NewsArticle; question: string }) => {
-//       return newsAPI.answerQuestion(article, question)
-//     },
-//   })
-// }

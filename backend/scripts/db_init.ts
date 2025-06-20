@@ -1,21 +1,22 @@
 import { config } from "dotenv";
+import { readFileSync } from "fs";
 import mindsDB from "mindsdb-js-sdk";
 import postgres from "postgres";
 import { exit } from "process";
 
 export interface NewsArticleType {
-  id: number
-  source_id: string
-  source_name: string
-  author: string
-  title: string
-  description: string
-  content: string
-  category: string
-  url: string
-  urltoimage: string
-  publishedat: string
-  date_added: string
+  id: number;
+  source_id: string;
+  source_name: string;
+  author: string;
+  title: string;
+  description: string;
+  content: string;
+  category: string;
+  url: string;
+  urltoimage: string;
+  publishedat: string;
+  date_added: string;
 }
 
 config();
@@ -33,7 +34,6 @@ const MindsDB = mindsDB.default;
 const sql = postgres(process.env.DB_URL!);
 
 try {
-
   await MindsDB.connect({
     host: "http://localhost:47334",
     user: "",
@@ -82,30 +82,10 @@ try {
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );
-`
-  await sql`
-    CREATE TABLE IF NOT EXISTS ai_summaries (
-      id SERIAL PRIMARY KEY,
-      article_id INTEGER NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
-      summary_text TEXT NOT NULL,
-      confidence_score DECIMAL(3,2),
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    );
-`
-  await sql`
-    CREATE TABLE IF NOT EXISTS questions_answers (
-      id SERIAL PRIMARY KEY,
-      article_id INTEGER NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
-      question TEXT NOT NULL,
-      answer TEXT NOT NULL,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    );
-  `
+  `;
 
   const createDbResult = await MindsDB.Databases.getDatabase(
-    "postgres_conn"
+    "postgres_conn",
   );
 
   if (!createDbResult) {
@@ -121,7 +101,7 @@ try {
       FROM google_gemini
       USING
         api_key = '${process.env.GEMINI_API}';
-  `)
+  `);
 
   await MindsDB.SQL.runQuery(`
     CREATE MODEL translation_model
@@ -130,7 +110,7 @@ try {
       engine = 'google_gemini_engine',
       model_name = 'gemini-2.0-flash-lite',
       prompt_template = 'JUST Translate this text {{content}} to {{lang}} DO NOT GIVE SUGGESTIONS!';
-  `)
+  `);
 
   await MindsDB.SQL.runQuery(`
     CREATE MODEL summarization_model
@@ -139,7 +119,7 @@ try {
       engine = 'google_gemini_engine',
       model_name = 'gemini-2.0-flash-lite',
       prompt_template = 'Summarize this {{content}} AND TRANSLATE the summarized text to {{lang}} DO NOT GIVE SUGGESTIONS! and ONLY GIVE ME THE {{lang}} TRANSLATED TEXT PLEASE!';
-  `)
+  `);
 
   await MindsDB.SQL.runQuery(`
     CREATE MODEL search_content_summarization_model
@@ -154,24 +134,39 @@ try {
 
           content: {{content}}
         ';
-  `)
+  `);
+
+  const prompt = readFileSync(
+    `${process.cwd()}/scripts/cross_content.txt`,
+    "utf-8",
+  ).replaceAll("\n", " ");
+
   await MindsDB.SQL.runQuery(`
-    CREATE AGENT search_agent
+    CREATE AGENT content_cross_checker
       USING
-        model = 'gemini-2.0-flash',
-        google_api_key = ${process.env.GEMINI_API},
-        include_knowledge_bases= ['mindsdb.articles_kb'],
-        include_tables=['postgres_conn.articles'],
-        prompt_template='
-            mindsdb.articles_kb stores articles 
-            postgres_conn.articles stores articles
-        ';
-  `)
+      model = 'gemini-2.0-flash',
+      google_api_key = '${process.env.GEMINI_API}',
+      include_knowledge_bases = ['mindsdb.articles_kb'],
+      include_tables      = ['postgres_conn.articles'],
+      tools               = ['sql_query'],
+      prompt_template     = '${prompt}'
+  `);
 
-  console.log("Created Into database")
+  await MindsDB.SQL.runQuery(`
+    CREATE JOB mindsdb.add_articles_to_kb (
+      INSERT INTO articles_kb (
+        id, title, description, content, source_name, author, category, published_at, source_id
+      )
+      SELECT id, title, description, content, source_name, author, category, published_at, source_id
+      FROM postgres_conn.articles
+      WHERE content IS NOT NULL;
+    ) EVERY hour;
+  `);
 
-  exit(0)
+  console.log("Created Into database");
+
+  exit(0);
 } catch (error) {
   console.log(error);
-  exit(1)
+  exit(1);
 }

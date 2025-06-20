@@ -11,7 +11,7 @@ export const SUPPORTED_LANGUAGES = [
   { code: "zh", name: "Chinese" },
   { code: "ar", name: "Arabic" },
   { code: "hi", name: "Hindi" },
-] as const
+] as const;
 
-export type LanguageCode = (typeof SUPPORTED_LANGUAGES)[number]["code"]
-export type LanguageName = (typeof SUPPORTED_LANGUAGES)[number]["name"]
+export type LanguageCode = (typeof SUPPORTED_LANGUAGES)[number]["code"];
+export type LanguageName = (typeof SUPPORTED_LANGUAGES)[number]["name"];

@@ -2,11 +2,11 @@ import React, { useEffect } from "react";
 
 export const useOutsideClick = (
   ref: React.RefObject<HTMLDivElement | null>,
-  callback: Function
+  callback: Function,
 ) => {
   useEffect(() => {
     const listener = (event: any) => {
-      const target = event.target as Element
+      const target = event.target as Element;
       if (!ref.current || ref.current.contains(event.target)) {
         return;
       }
@@ -15,7 +15,7 @@ export const useOutsideClick = (
         target.closest("[data-radix-dropdown-menu-content]") ||
         target.closest("[data-radix-dropdown-menu-item]") ||
         target.closest('[role="menu"]') ||
-        target.closest('[role="menuitem"]')
+        target.closest('[role="menuitem"]');
 
       // Only call handler if it's not a dropdown click
       if (isDropdownClick) return;

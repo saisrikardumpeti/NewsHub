@@ -4,7 +4,7 @@ import { Readability } from "@mozilla/readability";
 
 enum Status {
   OK = "ok",
-  ERROR = "error"
+  ERROR = "error",
 }
 
 interface NewsSource {
@@ -31,43 +31,48 @@ interface NewsResponse {
 
 export function extractPlainText(raw: string): string {
   return raw
-    .replace(/\\[nrt]/g, ' ')          
-    .replace(/<\/?[^>]+(>|$)/g, '')
-    .replace(/[\\'"]/g, '')
-    .replace(/\s+/g, ' ')
+    .replace(/\\[nrt]/g, " ")
+    .replace(/<\/?[^>]+(>|$)/g, "")
+    .replace(/[\\'"]/g, "")
+    .replace(/\s+/g, " ")
     .trim();
 }
 
 export async function getNews(url: string) {
   try {
     const response = await fetch(url);
-    
+
     if (!response.ok) {
-      throw new Error(
+      console.log(
         `HTTP error! status: ${response.status} ${response.status}`,
       );
+      return;
     }
     const data: NewsResponse = await response.json();
-    
+
     if (data.status === Status.ERROR) {
-      throw new Error('API returned error status');
+      console.log("API returned error status");
+      return;
     }
-    
+
     return data;
-    
   } catch (error) {
     if (error instanceof Error) {
-      throw error;
+      console.log(error);
+      return;
     }
-    
-    throw new Error(
-      `Failed to fetch news: ${error instanceof Error ? error.message : 'Unknown error'}`
+
+    console.log(
+      `Failed to fetch news: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`,
     );
+    return;
   }
 }
 
 function delay(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export async function sanitizeArticles(data: NewsResponse) {
@@ -77,37 +82,37 @@ export async function sanitizeArticles(data: NewsResponse) {
   try {
     browser = await puppeteer.launch({
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
 
     for (const news of data.articles) {
       try {
         const page = await browser.newPage();
-        
+
         await page.setUserAgent(
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
         );
 
         await page.goto(news.url, {
-          waitUntil: 'networkidle2',
+          waitUntil: "networkidle2",
         });
 
         await delay(500);
 
         const content = await page.content();
-        
+
         await page.close();
 
         const dom = new JSDOM(content, {
           url: news.url,
         });
-        
+
         const article = new Readability(dom.window.document).parse();
-        
+
         if (article?.textContent) {
           sanitizedArticles.push({
             ...news,
-            content: extractPlainText(article.textContent)
+            content: extractPlainText(article.textContent),
           });
         }
       } catch (error) {
@@ -117,7 +122,7 @@ export async function sanitizeArticles(data: NewsResponse) {
       }
     }
   } catch (error) {
-    console.error('Browser launch error:', error);
+    console.error("Browser launch error:", error);
   } finally {
     if (browser) {
       await browser.close();
