@@ -1,8 +1,6 @@
 # NewsHub - AI-Powered News Aggregator 📰
 
-<video controls autoplay loop muted>
-  <source src="https://raw.githubusercontent.com/saisrikardumpeti/quest-19/refs/heads/main/.github/schematic_ai.mp4" type="video/mp4">
-</video>
+<video src="https://github.com/user-attachments/assets/c632dbce-3bb4-4146-b377-66a40d8dd992"></video>
 
 A full-stack news aggregation platform that delivers personalized news
 experiences through AI-powered summarization, translation, and intelligent
@@ -10,17 +8,14 @@ content curation.
 
 ## Demo Videos
 
-<div style="display: flex; flex-wrap: wrap;">
-  <video controls autoplay loop muted preload height="250px">
-    <source src=".github/cross_content_checker.mp4" type="video/mp4">
-  </video>
-  <video controls autoplay loop muted preload height="250px">
-    <source src=".github/summary_model.mp4" type="video/mp4">
-  </video>
-  <video controls autoplay loop muted preload height="250px">
-    <source src=".github/translation_model.mp4" type="video/mp4">
-  </video>
-</div>
+### Cross Content Checker (AI Agent)
+<video height="250px" src="https://github.com/user-attachments/assets/9f4899ad-0856-4460-a71b-4c67cac18e78"></video>
+
+### Summary Model (AI Tables)
+<video height="250px" src="https://github.com/user-attachments/assets/4a9ac973-53c7-42a5-b6e0-e878b4919731"></video>
+
+### Transltion Model (AI Tables)
+<video height="250px" src="https://github.com/user-attachments/assets/fb8358a2-b992-4801-964d-e4d49f44021f"></video>
 
 ## ✨ Features
 
