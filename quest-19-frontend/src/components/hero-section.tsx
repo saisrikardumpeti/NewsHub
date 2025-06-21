@@ -1,11 +1,10 @@
-import { Badge } from "@/components/ui/badge";
-import { type NewsArticle, useUserPreferences } from "@/hooks/use-news";
+import { type NewsArticle } from "@/hooks/use-news";
 import { Clock } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useId, useRef, useState } from "react";
 import { ArticleModal } from "./article-modal";
 import { useHeadlines } from "@/hooks/use-headlines";
-import type { NEWS_CATEGORY, NEWS_CATEGORY_NAME } from "@/lib/constants";
+import type { NEWS_CATEGORY_NAME } from "@/lib/constants";
 
 interface HeroSectionProps {
   category?: NEWS_CATEGORY_NAME;
@@ -15,7 +14,6 @@ export default function HeroSection({ category }: HeroSectionProps) {
   const [active, setActive] = useState<NewsArticle | null>(
     null,
   );
-  const { data: userPreferences } = useUserPreferences();
   const id = useId();
   const ref = useRef<HTMLDivElement>(null);
 

@@ -10,6 +10,7 @@ interface CrossContentProps {
 }
 
 interface MarkdownComponents {
+  /* eslint-disable  @typescript-eslint/no-explicit-any */
   [key: string]: React.ComponentType<any>;
 }
 
@@ -137,7 +138,7 @@ function CrossContentSkeleton() {
       <div>
         <Skeleton className="h-6 w-32 mb-4" />
         <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
+          {[1, 2, 3].map(() => (
             <>
               <Skeleton className="h-5 w-full mb-2" />
               <Skeleton className="h-4 w-3/4" />

@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { Plus, RotateCcw, Save, Settings, Trash2 } from "lucide-react";
 import type React from "react";
 import { useEffect, useState } from "react";
@@ -18,10 +18,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { BaseLayout } from "@/layouts/BaseLayout";
 import {
-  DEFAULT_NEWS_SOURCES,
-  type NEWS_CATEGORY,
-  type NEWS_SOURCES,
-  PREDEFINED_CATEGORIES,
+  DEFAULT_NEWS_SOURCES, PREDEFINED_CATEGORIES
 } from "@/lib/constants";
 import { cookieUtils, type UserPreferences } from "@/lib/cookies";
 
@@ -65,7 +62,7 @@ function Preferences() {
       toast("Preferences saved", {
         description: "Your content preferences have been successfully saved.",
       });
-    } catch (error) {
+    } catch {
       toast("Error saving preferences", {
         description:
           "There was an error saving your preferences. Please try again.",

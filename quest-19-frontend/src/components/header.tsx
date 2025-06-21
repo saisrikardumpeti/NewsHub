@@ -31,7 +31,6 @@ export default function Header({ q }: { q?: string }) {
           {/* Logo */}
           <Link
             to={"/"}
-            search={(prev) => ({})}
             className="flex items-center space-x-2"
           >
             <div className="h-8 w-8 rounded bg-primary flex items-center justify-center">

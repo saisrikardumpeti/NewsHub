@@ -3,6 +3,7 @@ export interface UserPreferences {
   categories: string[];
 }
 export const cookieUtils = {
+  /* eslint-disable  @typescript-eslint/no-explicit-any */
   set: (name: string, value: any, days = 30) => {
     if (typeof document === "undefined") return;
     const expires = new Date();

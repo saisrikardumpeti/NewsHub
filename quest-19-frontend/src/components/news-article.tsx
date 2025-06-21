@@ -1,9 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { Sparkles } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { type NewsArticle } from "@/hooks/use-news";
-import { Skeleton } from "./ui/skeleton";
-import { TextLoadingSkeleton } from "./ui/text-loading";
 import { ArticleModal } from "./article-modal";
 import { ArticleCard } from "./article-card";
 
@@ -67,18 +64,5 @@ export function NewsArticles(props: NewsArticlesProps) {
         ))}
       </ul>
     </>
-  );
-}
-
-function AISummaryLoading() {
-  return (
-    <div className="bg-neutral-800 rounded-md p-4">
-      <h1 className="text-lg font-bold inline-flex items-center gap-x-2">
-        <Sparkles /> Ai Summary
-      </h1>
-      <Skeleton className="h-42 p-4">
-        <TextLoadingSkeleton lines={5} skeletonClassName="bg-purple-200" />
-      </Skeleton>
-    </div>
   );
 }
