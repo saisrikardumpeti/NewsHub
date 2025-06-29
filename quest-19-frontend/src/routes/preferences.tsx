@@ -17,9 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { BaseLayout } from "@/layouts/BaseLayout";
-import {
-  DEFAULT_NEWS_SOURCES, PREDEFINED_CATEGORIES
-} from "@/lib/constants";
+import { DEFAULT_NEWS_SOURCES, PREDEFINED_CATEGORIES } from "@/lib/constants";
 import { cookieUtils, type UserPreferences } from "@/lib/cookies";
 
 export const Route = createFileRoute("/preferences")({

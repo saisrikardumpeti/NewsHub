@@ -3,7 +3,7 @@ import React, { useEffect } from "react";
 export const useOutsideClick = (
   ref: React.RefObject<HTMLDivElement | null>,
   /* eslint-disable  @typescript-eslint/no-unsafe-function-type */
-  callback: (Function),
+  callback: Function,
 ) => {
   useEffect(() => {
     /* eslint-disable  @typescript-eslint/no-explicit-any */

@@ -1,9 +1,9 @@
 import { config } from "dotenv";
 import postgres from "postgres";
 import { exit } from "process";
-import { DEFAULT_NEWS_SOURCES } from "../src/lib/constant.js";
 import { extractPlainText, getNews, sanitizeArticles } from "./get_news.js";
 import mindsDB from "mindsdb-js-sdk";
+import { DEFAULT_NEWS_SOURCES } from "../src/lib/constant.js";
 
 config();
 
@@ -64,7 +64,7 @@ for (const source of DEFAULT_NEWS_SOURCES) {
         ${newArticle.title},
         ${newArticle.description || "No description."},
         ${newArticle.content},
-        ${(category?.value as string) || "General"},
+        ${(category?.value as string).trim() || "General"},
         ${newArticle.url},
         ${
         newArticle.urlToImage ||

@@ -2,10 +2,9 @@
   "name": "backend",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx watch ./src/index.ts",
     "db:init": "tsx scripts/db_init.ts",
-    "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "tsx ./src/index.ts",
     "add_articles": "tsx scripts/add_articles_categories.ts || tsx scripts/add_articles_sources.ts"
   },
   "dependencies": {

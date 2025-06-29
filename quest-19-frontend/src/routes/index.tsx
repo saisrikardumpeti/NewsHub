@@ -1,6 +1,4 @@
-import {
-  createFileRoute
-} from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { BaseLayout } from "@/layouts/BaseLayout";
 import PersonalizedSection from "@/components/personalized-section";
 import HeroSection from "@/components/hero-section";

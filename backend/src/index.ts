@@ -28,8 +28,6 @@ app.get("/search", async (c) => {
         SELECT DISTINCT(id)
         FROM articles_kb
         WHERE content = '${extractPlainText(q)}'
-        ORDER BY relevance DESC
-        LIMIT 16
       );
     `);
     return c.json({
@@ -186,16 +184,24 @@ app.get("/headlines", async (c) => {
 app.get("/personal-recommendations", async (c) => {
   const s = c.req.query("sources");
   const category = c.req.query("category");
-  console.log(s, category);
   if (s && category) {
     const sl = s.split(",").map((e) => `"${e}"`).join(",");
     const cl = category.split(",").map((e) => `"${e}"`).join(",");
+    
+    console.warn(`
+      SELECT * FROM postgres_conn.articles WHERE id IN (
+        SELECT DISTINCT(id)
+        FROM articles_kb
+        WHERE source_id IN (${sl}) AND category IN (${cl})
+        ORDER BY RANDOM()
+      );
+      `);
 
     const query = await MindsDB.SQL.runQuery(`
     SELECT * FROM postgres_conn.articles WHERE id IN (
       SELECT DISTINCT(id)
       FROM articles_kb
-      WHERE content = 'Give me some articles' AND (source_id IN (${sl}) AND category IN (${cl}))
+      WHERE source_id IN (${sl}) AND category IN (${cl})
       ORDER BY RANDOM()
     );
   `);
@@ -278,9 +284,49 @@ app.get("/cross-content-checker", async (c) => {
   }, 400);
 });
 
+app.get("/search-relevancy", async (c) => {
+    const q = c.req.query("q");
+
+  if (q) {
+    const generate_test_data = await MindsDB.SQL.runQuery(`
+      EVALUATE KNOWLEDGE_BASE mindsdb.articles_kb
+        USING
+        test_table = files.articles_kb_test_data, 
+        generate_data = {
+          'from_sql': 'SELECT chunk_content as content FROM mindsdb.articles_kb WHERE content = "${extractPlainText(q)}"', 
+          'count': 10
+        }, 
+        evaluate = false,
+        version = 'llm_relevancy';
+    `);
+    if (generate_test_data.error_message) {
+      return c.json({
+        error: generate_test_data.error_message
+      }, 500)
+    }
+    const relevancy_resuts = await MindsDB.SQL.runQuery(`
+      EVALUATE KNOWLEDGE_BASE mindsdb.articles_kb
+        USING
+          test_table = files.articles_kb_test_data, 
+          evaluate = true,
+          version = 'llm_relevancy';
+    `);
+
+    return c.json({
+      result: relevancy_resuts.rows[0].avg_relevancy,
+    }, 200);
+  }
+
+  return c.json(
+    c.json({
+      messages: "q was not given",
+    }),
+    400,
+  );
+})
+
 serve({
   fetch: app.fetch,
-  hostname: "0.0.0.0",
   port: 3000,
 }, (info) => {
   console.log(`Server is running on http://localhost:${info.port}`);

@@ -45,14 +45,20 @@ export default function PersonalizedSection() {
     setActive(news);
   }
 
-  if (userPreferences?.categories.length === 0 && userPreferences.sources.length === 0) {
+  if (
+    userPreferences?.categories.length === 0 &&
+    userPreferences.sources.length === 0
+  ) {
     return (
       <div className="flex items-center justify-center h-96 bg-neutral-900 rounded-md p-4">
-        <Link to="/preferences" className="inline-flex p-2 rounded-md bg-neutral-800">
+        <Link
+          to="/preferences"
+          className="inline-flex p-2 rounded-md bg-neutral-800"
+        >
           <Plus /> Add your preferences
         </Link>
       </div>
-    )
+    );
   }
 
   if (status === "pending") {

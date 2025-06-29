@@ -9,12 +9,15 @@ content curation.
 ## Demo Videos
 
 ### Cross Content Checker (AI Agent)
+
 <video height="250px" src="https://github.com/user-attachments/assets/9f4899ad-0856-4460-a71b-4c67cac18e78"></video>
 
 ### Summary Model (AI Tables)
+
 <video height="250px" src="https://github.com/user-attachments/assets/4a9ac973-53c7-42a5-b6e0-e878b4919731"></video>
 
 ### Transltion Model (AI Tables)
+
 <video height="250px" src="https://github.com/user-attachments/assets/fb8358a2-b992-4801-964d-e4d49f44021f"></video>
 
 ## ✨ Features
@@ -80,6 +83,8 @@ Start the required services using Docker:
 ```bash
 # Start MindsDB (AI/ML platform)
 docker run --name mindsdb \
+  --add-host=host.docker.internal:host-gateway \
+  -v $PWD/mdb_data:/root/mdb_storage \
   -p 47334:47334 \
   -p 47336:47336 \
   -d mindsdb/mindsdb
@@ -88,6 +93,8 @@ docker run --name mindsdb \
 docker run --name quest-19-db \
   -e POSTGRES_PASSWORD=password \
   -e POSTGRES_DB=news_platform \
+  -v $PWD/db_data/:/var/lib/postgresql/data \
+  --add-host=host.docker.internal:host-gateway \
   -p 5432:5432 \
   -d postgres
 ```
@@ -114,7 +121,7 @@ POSTGRES_DB=news_platform
 DB_URL=postgres://postgres:password@localhost:5432/news_platform
 
 # Network Configuration (Replace with your machine's IP)
-MINDSDB_POSTGRES_HOST=192.168.1.100  # Run 'ipconfig' (Windows) or 'ifconfig' (Mac/Linux)
+MINDSDB_POSTGRES_HOST=host.docker.internal
 ```
 
 ### 3. Backend Setup
@@ -125,7 +132,10 @@ chmod +x setup-cron.sh
 pnpm install
 pnpm db:init        # Initialize database schema
 pnpm dev            # Start development server
-./setup-cron.sh     # run the cron job for automatic fetching of new data
+
+crontab -e
+30 2 * * * cd backend && /usr/local/bin/pnpm add_articles # use whereis pnpm to get path
+
 pnpm add_articles   # Seed database with some articles this might take a while
 ```
 
@@ -146,25 +156,6 @@ pnpm dev        # Start development server
 2. **Gemini API Key**: Get from
    [Google AI Studio](https://makersuite.google.com/app/apikey)
 3. **News API Key**: Get from [NewsAPI.org](https://newsapi.org/register)
-
-### Network Configuration
-
-To connect MindsDB with PostgreSQL, you need your machine's local IP address:
-
-**Windows:**
-
-```cmd
-ipconfig
-```
-
-**Mac/Linux:**
-
-```bash
-ifconfig
-```
-
-Use the IP address (e.g., `192.168.1.100`) for the `MINDSDB_POSTGRES_HOST`
-variable.
 
 ## 📝 Available Scripts
 
@@ -192,4 +183,5 @@ pnpm lint       # Run ESLint
 <div style="text-align:center;">
 
 **Built with ❤️ by Sai Srikar Dumpeti**
+
 </div>

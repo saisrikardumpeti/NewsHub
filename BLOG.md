@@ -1,140 +1,188 @@
-# NewsHub: Intelligence Meets Information
+## 🎯 Project Goal
 
-## The Problem with Traditional News Aggregators
+The objective behind building this platform was simple but ambitious: to help
+users stay informed on their own terms. Instead of a noisy flood of irrelevant
+headlines, the platform offers a clean, AI-enhanced experience where:
 
-We're drowning in information. Every day, thousands of news articles are
-published across hundreds of sources, each with different perspectives, writing
-styles, and terminology. Traditional news aggregators rely on keyword matching
-and basic categorization, leaving users frustrated when they can't find what
-they're looking for.
+Users set their own preferred sources and categories.
 
-Imagine searching for "climate change solutions" and missing crucial articles
-about "carbon capture technology" or "renewable energy breakthroughs" simply
-because they don't contain your exact search terms. This is where semantic
-understanding becomes critical.
+Every article can be summarized, translated, or verified against other sources.
+
+Users can ask natural language questions, and the system finds the most relevant
+news and a summary in response.
 
 ---
 
-## Introducing NewsHub
+## 🧱 Tech Stack Overview
 
-As part of [Quest-19](https://quira.sh/quests/creator/details?questId=19), I
-built **NewsHub** – a full-stack news aggregation platform that goes beyond
-simple keyword matching. By leveraging [MindsDB's](https://mindsdb.com/)
-Knowledge Base feature, NewsHub understands the meaning behind your queries,
-delivering relevant results even when the exact words don't match.
+This project is powered by a modern, performance-oriented stack:
 
----
+- ⚙️ Backend: Node.js + Hono.js
+- 🌐 Frontend: React with Vite.js
+- 🧠 Databases: PostgreSQL + MindsDB
+- 📰 Scraping Agent: Puppeteer (runs every hour to collect new articles)
 
-## 🧠 The Power of Semantic Search
-
-### Traditional Search:
-
-- **User searches**: "AI in medicine"
-- **System finds**: Articles containing exactly "AI" AND "medicine"
-- **Result**: Misses relevant articles about "machine learning in healthcare" or
-  "artificial intelligence diagnostic tools"
-
-### Semantic Search with NewsHub:
-
-- **User searches**: "AI in medicine"
-- **System understands**: Healthcare applications of artificial intelligence
-- **Result**: Finds articles about ML diagnostics, AI drug discovery, medical
-  automation, and more
+![Architecture of Demo](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/z603w2svrk0b3dyia8nr.png)
 
 ---
 
-## 🚀 Project Architecture
+## 🔁 How It Works – Behind the Scenes
 
-## ![Architecture of Demo](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/z603w2svrk0b3dyia8nr.png)
+- When the server starts, a Puppeteer script initiates and fetches fresh news
+  every hour.
+- New content is inserted into PostgreSQL, and MindsDB JOBS monitor for new
+  entries.
+- If an article hasn’t been added to a MindsDB knowledge base (KB), it’s
+  automatically ingested.
+- On the frontend, users can:
 
-## MindsDB Features Used
+Click to summarize or translate the content.
 
-### 1. Knowledge Bases
-
-- Store unstructured article content using embeddings
-- Enable SQL-based semantic search using vector similarity
-
-### 2. Models
-
-- Custom LLMs used for:
-  - Translating content
-  - Summarizing articles
-
-### 3. Jobs
-
-- Periodically ingest fresh content from Postgres into the KB (like a cron job)
-
-### 4. Agents
-
-- (Optional future step) Build AI agents to chat with the content, give
-  recommendations, etc.
-
----
-
-## 📁 Repository Setup
-
-```bash
-git clone https://github.com/saisrikardumpeti/quest-19
-cd quest-19
-```
-
-Follow the `README.md` in the repo to set up.
-
-### Database Setup
-
-```bash
-cd backend
-pnpm db:init
-```
-
-### Knowledge Base Setup
-
-```sql
-CREATE KNOWLEDGE_BASE IF NOT EXISTS articles_kb
-  USING
-    embedding_model = {
-      "provider": "openai",
-      "model_name": "text-embedding-3-small",
-      "api_key": "${process.env.OPENAI_API!}"
-    },
-    reranking_model = {
-      "provider": "openai",
-      "model_name": "gpt-4.1-nano",
-      "api_key": "${process.env.OPENAI_API!}"
-    },
-    metadata_columns = [
-      'source_id',
-      'source_name',
-      'title',
-      'description',
-      'category',
-      'published_at'
-    ],
-    content_columns = ['id', 'content'],
-    id_column = 'id';
-```
-
-### Postgres Connection (Node)
+Use a custom AI Agent to check if the same news is covered elsewhere and analyze
+its credibility and context.
 
 ```js
-const createDbResult = await MindsDB.Databases.getDatabase("postgres_conn");
-if (!createDbResult) {
-  await MindsDB.Databases.createDatabase(
-    "postgres_conn",
-    "postgres",
-    params,
+import { config } from "dotenv";
+import postgres from "postgres";
+import { exit } from "process";
+import { DEFAULT_NEWS_SOURCES } from "../src/lib/constant.js";
+import { extractPlainText, getNews, sanitizeArticles } from "./get_news.js";
+import mindsDB from "mindsdb-js-sdk";
+
+config();
+
+const sql = postgres({
+  host: "localhost",
+  port: 5432,
+  database: "news_platform",
+  user: "postgres",
+  password: "password",
+});
+
+const MindsDB = mindsDB.default;
+
+await MindsDB.connect({
+  host: "http://localhost:47334",
+  user: "",
+  password: "",
+});
+
+for (const source of DEFAULT_NEWS_SOURCES) {
+  const url =
+    `https://newsapi.org/v2/top-headlines?sources=${source.id}&pageSize=10&apiKey=${process.env.NEWS_API_KEY}`;
+
+  const articles = await getNews(url);
+
+  if (!articles) continue;
+  const sanitizedArticles = await sanitizeArticles(articles);
+
+  const getContentCategoryModel = await MindsDB.Models.getModel(
+    "get_content_category_model",
+    "mindsdb",
   );
+
+  for (const newArticle of sanitizedArticles) {
+    const category = await getContentCategoryModel?.query({
+      where: [
+        "content = " + `'${extractPlainText(newArticle.content)}'`,
+      ],
+    });
+    try {
+      await sql`
+      INSERT INTO articles(
+        source_id, 
+        source_name, 
+        author, 
+        title, 
+        description, 
+        content, 
+        category, 
+        article_url, 
+        image_url, 
+        published_at
+      )
+      VALUES (
+        ${newArticle.source.id || "others"},
+        ${newArticle.source.name},
+        ${newArticle.author || "Anonymus"},
+        ${newArticle.title},
+        ${newArticle.description || "No description."},
+        ${newArticle.content},
+        ${(category?.value as string) || "General"},
+        ${newArticle.url},
+        ${
+        newArticle.urlToImage ||
+        "https://placehold.co/1080x720?text=Image%20not%20provided"
+      },
+        ${newArticle.publishedAt || Date.now().toLocaleString()}
+      )
+      ON CONFLICT (title) DO NOTHING;
+    `;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  console.log("Articles added for ", source.name);
 }
+
+exit(0);
 ```
 
-### MindsDB Models and Jobs
+---
+
+## 🧠 AI Agent Functionality (in MindsDB)
+
+<video controls autoplay loop muted>
+  <source src="https://raw.githubusercontent.com/saisrikardumpeti/quest-19/refs/heads/main/.github/cross_content_checker.mp4" type="video/mp4">
+</video>
+
+The AI Agent integration gives powerful multi-perspective analysis on any
+article:
+
+- 📝 Summary generation
+- ✅ Consensus Points (common facts across sources)
+- 🌟 Unique Information (only in some sources)
+- 🔍 New Discoveries not present in original
+- ⚠️ Conflicting Information
+- ❗ Unverified Claims
+- 📈 Trend Analysis
+- 📚 Additional Context
+
+> This is made possible through CREATE AGENT and AI Tables features of MindsDB.
+
+---
+
+## 🔎 Schematic/Natural Language Search
+
+Users can type queries like: "Is Nothing launching a new phone?":
+
+<video controls autoplay loop muted>
+  <source src="https://raw.githubusercontent.com/saisrikardumpeti/quest-19/refs/heads/main/.github/schematic_ai.mp4" type="video/mp4">
+</video>
+
+> This is searching for the content which is related to "nothing phones" or "any
+> thing related to phone contents".
+>
+> Pull the most relevant articles using
+> `SELECT ... FROM knowledge_base WHERE content = '<query>'`.
+>
+> Summarize and present the findings clearly.
+>
+> This is powered by MindsDB Knowledge Bases + semantic indexing.
+
+---
+
+## 💃 AI tables using MindsDB Models
+
+<video controls autoplay loop muted>
+  <source src="https://raw.githubusercontent.com/saisrikardumpeti/quest-19/refs/heads/main/.github/translation_model.mp4" type="video/mp4">
+</video>
+
+<video controls autoplay loop muted>
+  <source src="https://raw.githubusercontent.com/saisrikardumpeti/quest-19/refs/heads/main/.github/summary_model.mp4" type="video/mp4">
+</video>
 
 ```sql
-CREATE ML_ENGINE google_gemini_engine
-  FROM google_gemini
-  USING
-    api_key = 'your api key';
-
 CREATE MODEL translation_model
 PREDICT response
 USING
@@ -148,116 +196,31 @@ USING
   engine = 'google_gemini_engine',
   model_name = 'gemini-2.0-flash-lite',
   prompt_template = 'Summarize this {{content}} AND TRANSLATE the summarized text to {{lang}} DO NOT GIVE SUGGESTIONS! and ONLY GIVE ME THE {{lang}} TRANSLATED TEXT PLEASE!';
-
-CREATE JOB mindsdb.add_articles_to_kb (
-  INSERT INTO articles_kb (
-    id, title, description, content, source_name, author, category, published_at, source_id
-  )
-  SELECT id, title, description, content, source_name, author, category, published_at, source_id
-  FROM postgres_conn.articles
-  WHERE content IS NOT NULL;
-) EVERY hour;
 ```
 
 ---
 
-## 🚀 Backend API (Hono.js + MindsDB)
+## 🧩 Knowledge Base & Job Integration
 
-### Semantic Search Endpoint
+The project fulfills all key requirements of MindsDB's KB-based application:
 
-```js
-app.get("/search", async (c) => {
-  const q = c.req.query("q");
-  if (!q) return c.json({ message: "q was not given" }, 400);
-
-  const query = await MindsDB.SQL.runQuery(`
-    SELECT * FROM postgres_conn.articles WHERE id IN (
-      SELECT DISTINCT(id) FROM articles_kb
-      WHERE content = '${extractPlainText(q)}'
-      ORDER BY relevance DESC
-      LIMIT 16
-    );
-  `);
-  return c.json({ headlines: query.rows }, 200);
-});
-```
-
-### Translation
-
-```js
-const translationModel = await MindsDB.Models.getModel(
-  "translation_model",
-  "mindsdb",
-);
-const result = await translationModel?.query({
-  where: [
-    `lang = '${lang}'`,
-    `content = '${extractPlainText(content)}'`,
-  ],
-});
-```
-
-### Summary
-
-```js
-const summarizationModel = await MindsDB.Models.getModel(
-  "summarization_model",
-  "mindsdb",
-);
-const result = await summarizationModel?.query({
-  where: [
-    `lang = '${lang}'`,
-    `content = '${extractPlainText(content)}'`,
-  ],
-});
-```
-
-### Search + Summarize
-
-```js
-const summaryModel = await MindsDB.Models.getModel(
-  "search_content_summarization_model",
-  "mindsdb",
-);
-const query = await MindsDB.SQL.runQuery(
-  `SELECT STRING_AGG(chunk_content, ' ') as content FROM articles_kb WHERE content LIKE "${
-    extractPlainText(q)
-  }"`,
-);
-const summary = await summaryModel?.query({
-  where: [`content = '${extractPlainText(query.rows[0].content)}'`],
-});
-```
+- ✅ `CREATE KNOWLEDGE_BASE`
+- ✅ `INSERT INTO knowledge_base`
+- ✅ `SELECT ... FROM ... WHERE content = ...`
+- ✅ `CREATE INDEX ON knowledge_base`
+- ✅ `CREATE JOB for periodic insertion`
+- ✅ `CREATE AGENT for multi-step intelligent workflows`
 
 ---
 
-## 📈 Frontend Setup
+## 📌 Key Use Cases Demonstrated
 
-Built with **Vite.js + React** using:
-
-- `@tanstack/query` for fetching
-- `@tanstack/router` for routing
-- Acertinity UI components for styling
-
-Repo:
-[GitHub - saisrikardumpeti/quest-19](https://github.com/saisrikardumpeti/quest-19)
+- Real-time news summarization
+- Multilingual translation of news articles
+- Cross-source story validation
+- Conversational queries for topic-based news retrieval
+- AI Agent consensus comparison of conflicting sources
 
 ---
 
-## ✨ Thoughts
-
-- Mindsdb feature are very easy to implement.
-- It can work with pre existing data.
-
----
-
-## Summary
-
-NewsHub combines:
-
-- Semantic search via **MindsDB Knowledge Bases**
-- Real-time summaries and translations via **LLMs**
-- Seamless integration of AI + SQL + React frontend
-
-Result? A modern, intelligent news discovery experience that understands intent,
-not just keywords.
+## 👨‍💻 Checkout the full code on [Github](https://github.com/saisrikardumpeti/quest-19)

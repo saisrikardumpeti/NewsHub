@@ -15,9 +15,12 @@ export function useHeadlines({ category }: useHeadlinesProps) {
   return useQuery<Response>({
     queryKey: ["headlines", category],
     queryFn: async () => {
-      const res = await fetch(`/api/headlines?category=${category || defaultCategory}`, {
-        credentials: "include",
-      });
+      const res = await fetch(
+        `/api/headlines?category=${category || defaultCategory}`,
+        {
+          credentials: "include",
+        },
+      );
       return res.json();
     },
     staleTime: 1 * 60 * 1000,

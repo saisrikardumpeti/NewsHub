@@ -1,9 +1,9 @@
 import { config } from "dotenv";
 import postgres from "postgres";
 import { exit } from "process";
-import { PREDEFINED_CATEGORIES } from "../src/lib/constant.js";
 import { getNews, sanitizeArticles } from "./get_news.js";
 import mindsDB from "mindsdb-js-sdk";
+import { PREDEFINED_CATEGORIES } from "../src/lib/constant.js";
 
 config();
 

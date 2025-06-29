@@ -7,12 +7,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AnimatePresence } from "motion/react";
 import { useEffect, useId, useRef, useState } from "react";
 import { motion } from "motion/react";
-import { Sparkles } from "lucide-react";
+import { LoaderPinwheel, Sparkles, Target } from "lucide-react";
 import { BaseLayout } from "@/layouts/BaseLayout";
 import { useSearchSummarize } from "@/hooks/use-search-summarize";
 import { TypewriterEffectSmooth } from "@/components/ui/typewriter-effects";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TextLoadingSkeleton } from "@/components/ui/text-loading";
+import { Button } from "@/components/ui/button";
+import { useSearchRelevancy } from "@/hooks/use-search-relevancy";
 
 type ProductSearch = {
   q?: string;
@@ -30,7 +32,9 @@ export const Route = createFileRoute("/search")({
 function RouteComponent() {
   const { q } = Route.useSearch();
   const { data: articles, status } = useSearchNews({ q });
-  const { data: searchSummary, status: searchStatus, isFetching } = useSearchSummarize({ q })
+  const { data: searchSummary, status: searchStatus, isFetching } =
+    useSearchSummarize({ q });
+  const { data: searchRelevancy, status: searchRelevancyStatus, refetch, isFetching: searchRelevancyFetching } = useSearchRelevancy({ q })
   const [active, setActive] = useState<NewsArticle | null>(
     null,
   );
@@ -58,12 +62,13 @@ function RouteComponent() {
     setActive(news);
   }
 
-  if (status === "pending" && searchStatus === 'pending') {
+  if (status === "pending" && searchStatus === "pending") {
     return (
       <BaseLayout className="space-y-4" q={q}>
         <section className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-3xl font-bold">Showing articles for : {q}</h2>
+            <Button><Target /> Check Search Relevancy</Button>
           </div>
           <LoadingArticles />
         </section>
@@ -71,15 +76,15 @@ function RouteComponent() {
     );
   }
 
-  if (status === "error" && searchStatus === 'error') {
+  if (status === "error" && searchStatus === "error") {
     return <>Error..</>;
   }
   return (
     <BaseLayout className="space-y-4" q={q}>
       <section className="mb-12 space-y-4">
-        {
-          isFetching ? <AISummaryLoading /> :
-            searchSummary ? <div>
+        {isFetching ? <AISummaryLoading /> : searchSummary
+          ? (
+            <div>
               <div className="space-y-2">
                 <div className="bg-neutral-800 rounded-md p-4">
                   <h1 className="text-lg font-bold inline-flex items-center gap-x-2">
@@ -92,10 +97,23 @@ function RouteComponent() {
                   />
                 </div>
               </div>
-            </div> : null
-        }
+            </div>
+          )
+          : null}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-3xl font-bold">Showing articles for : {q}</h2>
+          <Button className="cursor-pointer" onClick={() => refetch()}>
+            {
+              searchRelevancyStatus === 'pending' && searchRelevancyFetching ?
+              <>
+                <LoaderPinwheel className="animate-spin" /> Checking Relevancy 
+              </> : searchRelevancyStatus === 'success' ? <>
+                Your search relevancy is {Math.round(parseFloat(searchRelevancy.result) * 100) || 0}% 
+              </> : <>
+                <Target /> Check Search Relevancy
+              </>
+            }
+          </Button>
         </div>
         <>
           <AnimatePresence>

@@ -26,3 +26,6 @@ lerna-debug.log*
 
 # misc
 .DS_Store
+dist
+mdb_data
+db_data
