@@ -34,7 +34,12 @@ function RouteComponent() {
   const { data: articles, status } = useSearchNews({ q });
   const { data: searchSummary, status: searchStatus, isFetching } =
     useSearchSummarize({ q });
-  const { data: searchRelevancy, status: searchRelevancyStatus, refetch, isFetching: searchRelevancyFetching } = useSearchRelevancy({ q })
+  const {
+    data: searchRelevancy,
+    status: searchRelevancyStatus,
+    refetch,
+    isFetching: searchRelevancyFetching,
+  } = useSearchRelevancy({ q });
   const [active, setActive] = useState<NewsArticle | null>(
     null,
   );
@@ -68,7 +73,9 @@ function RouteComponent() {
         <section className="mb-12">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-3xl font-bold">Showing articles for : {q}</h2>
-            <Button><Target /> Check Search Relevancy</Button>
+            <Button>
+              <Target /> Check Search Relevancy
+            </Button>
           </div>
           <LoadingArticles />
         </section>
@@ -103,16 +110,24 @@ function RouteComponent() {
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-3xl font-bold">Showing articles for : {q}</h2>
           <Button className="cursor-pointer" onClick={() => refetch()}>
-            {
-              searchRelevancyStatus === 'pending' && searchRelevancyFetching ?
-              <>
-                <LoaderPinwheel className="animate-spin" /> Checking Relevancy 
-              </> : searchRelevancyStatus === 'success' ? <>
-                Your search relevancy is {Math.round(parseFloat(searchRelevancy.result) * 100) || 0}% 
-              </> : <>
-                <Target /> Check Search Relevancy
-              </>
-            }
+            {searchRelevancyStatus === "pending" && searchRelevancyFetching
+              ? (
+                <>
+                  <LoaderPinwheel className="animate-spin" /> Checking Relevancy
+                </>
+              )
+              : searchRelevancyStatus === "success"
+              ? (
+                <>
+                  Your search relevancy is{" "}
+                  {Math.round(parseFloat(searchRelevancy.result) * 100) || 0}%
+                </>
+              )
+              : (
+                <>
+                  <Target /> Check Search Relevancy
+                </>
+              )}
           </Button>
         </div>
         <>

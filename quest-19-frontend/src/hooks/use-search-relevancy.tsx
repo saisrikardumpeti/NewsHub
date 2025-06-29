@@ -5,7 +5,7 @@ type useSearchRelevancyProps = {
 };
 
 type Response = {
-  result	: string;
+  result: string;
 };
 
 export function useSearchRelevancy({ q }: useSearchRelevancyProps) {
@@ -19,6 +19,6 @@ export function useSearchRelevancy({ q }: useSearchRelevancyProps) {
       return res.json();
     },
     staleTime: 1 * 60 * 1000,
-    enabled: false
+    enabled: false,
   });
 }

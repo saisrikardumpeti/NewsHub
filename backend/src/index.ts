@@ -187,7 +187,7 @@ app.get("/personal-recommendations", async (c) => {
   if (s && category) {
     const sl = s.split(",").map((e) => `"${e}"`).join(",");
     const cl = category.split(",").map((e) => `"${e}"`).join(",");
-    
+
     console.warn(`
       SELECT * FROM postgres_conn.articles WHERE id IN (
         SELECT DISTINCT(id)
@@ -285,7 +285,7 @@ app.get("/cross-content-checker", async (c) => {
 });
 
 app.get("/search-relevancy", async (c) => {
-    const q = c.req.query("q");
+  const q = c.req.query("q");
 
   if (q) {
     const generate_test_data = await MindsDB.SQL.runQuery(`
@@ -293,7 +293,9 @@ app.get("/search-relevancy", async (c) => {
         USING
         test_table = files.articles_kb_test_data, 
         generate_data = {
-          'from_sql': 'SELECT chunk_content as content FROM mindsdb.articles_kb WHERE content = "${extractPlainText(q)}"', 
+          'from_sql': 'SELECT chunk_content as content FROM mindsdb.articles_kb WHERE content = "${
+      extractPlainText(q)
+    }"', 
           'count': 10
         }, 
         evaluate = false,
@@ -301,8 +303,8 @@ app.get("/search-relevancy", async (c) => {
     `);
     if (generate_test_data.error_message) {
       return c.json({
-        error: generate_test_data.error_message
-      }, 500)
+        error: generate_test_data.error_message,
+      }, 500);
     }
     const relevancy_resuts = await MindsDB.SQL.runQuery(`
       EVALUATE KNOWLEDGE_BASE mindsdb.articles_kb
@@ -323,7 +325,7 @@ app.get("/search-relevancy", async (c) => {
     }),
     400,
   );
-})
+});
 
 serve({
   fetch: app.fetch,

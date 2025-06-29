@@ -243,11 +243,11 @@ try {
 
   if (content_cross_checker_res.error_message) {
     console.log(
-      "❌ Error creating Content Cross Checker Model",
+      "❌ Error creating Content Cross Checker Agent",
       content_cross_checker_res.error_message,
     );
   } else {
-    console.log("✅ Successfully created Content Cross Checker Model");
+    console.log("✅ Successfully created Content Cross Checker Agent");
   }
 
   const mindsdb_jobs_res = await MindsDB.SQL.runQuery(`

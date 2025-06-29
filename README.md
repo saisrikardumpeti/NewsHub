@@ -1,12 +1,16 @@
 # NewsHub - AI-Powered News Aggregator 📰
 
-<video src="https://github.com/user-attachments/assets/c632dbce-3bb4-4146-b377-66a40d8dd992"></video>
+[![YouTube](https://i.ytimg.com/vi/WhLYJTKC7tg/hqdefault.jpg)](https://youtu.be/WhLYJTKC7tg)
 
 A full-stack news aggregation platform that delivers personalized news
 experiences through AI-powered summarization, translation, and intelligent
 content curation.
 
 ## Demo Videos
+
+### Schematic Search
+
+<video src="https://github.com/user-attachments/assets/c632dbce-3bb4-4146-b377-66a40d8dd992"></video>
 
 ### Cross Content Checker (AI Agent)
 
@@ -90,7 +94,7 @@ docker run --name mindsdb \
   -d mindsdb/mindsdb
 
 # Start PostgreSQL database
-docker run --name quest-19-db \
+docker run --name news_hub_db \
   -e POSTGRES_PASSWORD=password \
   -e POSTGRES_DB=news_platform \
   -v $PWD/db_data/:/var/lib/postgresql/data \
