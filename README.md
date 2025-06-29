@@ -1,12 +1,14 @@
 # NewsHub - AI-Powered News Aggregator 📰
 
-[![YouTube](https://i.ytimg.com/vi/WhLYJTKC7tg/maxresdefault.jpg)](https://youtu.be/WhLYJTKC7tg)
-
 A full-stack news aggregation platform that delivers personalized news
 experiences through AI-powered summarization, translation, and intelligent
 content curation.
 
+
 ## Demo Videos
+
+## Checkout Full Demo on YouTube
+[![YouTube](https://i.ytimg.com/vi/WhLYJTKC7tg/maxresdefault.jpg)](https://youtu.be/WhLYJTKC7tg)
 
 ### Schematic Search
 
