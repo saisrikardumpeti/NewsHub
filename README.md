@@ -7,7 +7,7 @@ content curation.
 
 ## Demo Videos
 
-## Checkout Full Demo on YouTube
+## Full Demo on YouTube
 [![YouTube](https://i.ytimg.com/vi/WhLYJTKC7tg/maxresdefault.jpg)](https://youtu.be/WhLYJTKC7tg)
 
 ### Schematic Search
