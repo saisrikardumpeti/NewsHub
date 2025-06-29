@@ -187,7 +187,7 @@ pnpm lint       # Run ESLint
 
 ---
 
-<div style="text-align:center;">
+<div align="center">
 
 **Built with ❤️ by Sai Srikar Dumpeti**
 
